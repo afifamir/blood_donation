@@ -123,7 +123,6 @@ def plot_yearly(update: Update, context: CallbackContext):
 
 # Function to plot Yearly Donations Regular for Malaysia State
 def plot_yearly_donations_regular(update: Update, context: CallbackContext):
-
     # Load the dataset
     donors = pd.read_parquet("https://dub.sh/ds-data-granular")
 
@@ -184,14 +183,11 @@ def plot_yearly_donations_regular(update: Update, context: CallbackContext):
             fig.add_annotation(x=row['Year'], y=row['Returning Donors'], text=change_text,
                             showarrow=False, yshift=-20)
 
-    fig.show()
-
-
     # Save plot to file
     fig.write_image("returning_donors_plot.png")
 
     # Send the plot to the Telegram chat
-    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('returning_donors_plot.png', 'rb'))
+    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('returning_donors_plot.png', 'rb'), timeout=500)
 
 # Function to handle /start command
 def start(update: Update, context: CallbackContext):
@@ -222,7 +218,7 @@ def run_script(update: Update, context: CallbackContext):
 
 # Main function
 def main():
-    updater = Updater("API_Token", use_context=True)
+    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)
     dp = updater.dispatcher
 
     # Add handlers for commands and callbacks
