@@ -196,7 +196,7 @@ def button(update: Update, context: CallbackContext):
 
 # Main function
 def main():
-    updater = Updater("6700407313:AAHOfkwhkZeOocrmNGWACzko4RVW9CIaF2Q", use_context=True)
+    updater = Updater("API_token", use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CallbackQueryHandler(button))
