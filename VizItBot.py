@@ -1,6 +1,8 @@
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import seaborn as sns
+import matplotlib.pyplot as plt
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 import schedule
@@ -134,13 +136,21 @@ def plot_yearly_donations_regular(update: Update, context: CallbackContext):
     donors['age_at_donation'] = (donors['visit_date'] - donors['birth_date']).dt.days // 365
 
     # Sort the data by 'donor_id' and 'visit_date' to ensure chronological order
-    donors.sort_values(by=['donor_id', 'visit_date'], inplace=True)
+    donors_sorted = donors.sort_values(by=['donor_id', 'visit_date'])
 
-    # Calculate the time difference between consecutive donations for each donor
-    donors['time_diff'] = donors.groupby('donor_id')['visit_date'].diff().dt.days
+    # Group by 'donor_id' for efficient calculation
+    donors_grouped = donors_sorted.groupby('donor_id')
+
+    # Calculate time differences within each donor group
+    donors_sorted['time_diff'] = donors_grouped['visit_date'].diff().dt.days
 
     # Identify donors who donated twice within a 24-month period
-    donors['returning_donor'] = donors.groupby('donor_id')['time_diff'].transform(lambda x: (x.shift(-1) <= 730) & (x <= 730))
+    time_diff_threshold = 730  # 24 months in days
+    within_24_months = (donors_sorted['time_diff'] <= time_diff_threshold) & (donors_sorted['time_diff'].shift(-1) <= time_diff_threshold)
+    donors_sorted['returning_donor'] = within_24_months
+
+    # Update the original DataFrame
+    donors = donors_sorted.sort_index()
 
     # Aggregate the data to count returning donors over time
     returning_donors_count = donors[donors['returning_donor']].copy()
@@ -151,43 +161,37 @@ def plot_yearly_donations_regular(update: Update, context: CallbackContext):
     # Calculate the percentage change compared to the previous year
     returning_donors_yearly['Percentage Change'] = returning_donors_yearly['Returning Donors'].pct_change() * 100
 
-    # Create a scatter plot using plotly.graph_objects
-    fig = go.Figure()
+    # Set the style
+    sns.set(style="whitegrid")
 
-    # Add the line plot
-    fig.add_trace(go.Scatter(x=returning_donors_yearly['Year'], y=returning_donors_yearly['Returning Donors'], mode='lines', name='Returning Donors'))
+    # Create the Seaborn line plot
+    plt.figure(figsize=(12, 6))  # Adjust the figure size as needed
+    sns.lineplot(data=returning_donors_yearly, x='Year', y='Returning Donors', marker='o', color='red')
 
-    # Customize the markers to be red in color and larger in size
-    fig.add_trace(go.Scatter(x=returning_donors_yearly['Year'], y=returning_donors_yearly['Returning Donors'], mode='markers',
-                            marker=dict(color='red', size=10), showlegend=False))
-
-    # Update layout
-    fig.update_layout(title={'text': 'Trend of Returning Blood Donors in Malaysia (Yearly Count)', 'x': 0.5},
-                    xaxis_title='Year',
-                    yaxis_title='Number of Returning Donors',
-                    xaxis=dict(tickmode='array', tickvals=returning_donors_yearly['Year']),
-                    yaxis=dict(tickmode='linear', tickformat='d'),
-                    font=dict(family="Helvetica"))
-
-    # Add labels for number of returning donors above the plot point
+    # Add labels for number of returning donors above the point plot
     for index, row in returning_donors_yearly.iterrows():
-        fig.add_annotation(x=row['Year'], y=row['Returning Donors'], text=str(row['Returning Donors']),
-                        showarrow=False, yshift=20)
+        plt.text(row['Year'], row['Returning Donors'] + 10, str(int(row['Returning Donors'])), ha='center', va='bottom', fontsize=12, fontfamily='Helvetica')
 
-    # Add labels for percentage change compared to the previous year below the plot point
+    # Add labels for percentage change compared to the previous year below the point plot
     for index, row in returning_donors_yearly.iterrows():
         if index > 0:
             change_text = f"{row['Percentage Change']:.2f}%"
             if row['Percentage Change'] > 0:
                 change_text = "+" + change_text
-            fig.add_annotation(x=row['Year'], y=row['Returning Donors'], text=change_text,
-                            showarrow=False, yshift=-20)
+            plt.text(row['Year'], row['Returning Donors'] - 10, change_text, ha='center', va='top', fontsize=12, fontfamily='Helvetica')
+
+    # Add labels and title
+    plt.title('Trend of Returning Blood Donors in Malaysia (Yearly Count)', fontsize=14, fontfamily='Helvetica')
+    plt.xlabel('Year', fontsize=12, fontfamily='Helvetica')
+    plt.ylabel('Number of Returning Donors', fontsize=12, fontfamily='Helvetica')
 
     # Save plot to file
-    fig.write_image("returning_donors_plot.png")
+    plot_filename = "returning_donors_plot.png"
+    plt.savefig(plot_filename)
 
     # Send the plot to the Telegram chat
-    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('returning_donors_plot.png', 'rb'), timeout=500)
+    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(plot_filename, 'rb'))
+
 
 # Function to handle /start command
 def start(update: Update, context: CallbackContext):
@@ -209,6 +213,7 @@ def button(update: Update, context: CallbackContext):
         plot_yearly(update, context)
     elif query.data == 'plot_yearly_donations_regular':
         plot_yearly_donations_regular(update, context)
+
 # Function to run the script
 def run_script(update: Update, context: CallbackContext):
     # Call your plotting functions here
@@ -218,7 +223,7 @@ def run_script(update: Update, context: CallbackContext):
 
 # Main function
 def main():
-    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)
+    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)  
     dp = updater.dispatcher
 
     # Add handlers for commands and callbacks
