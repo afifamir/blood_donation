@@ -64,6 +64,7 @@ def plot_monthly_cumulative(update: Update, context: CallbackContext):
     fig.write_image("monthly_plot.png")
 
     # Send the plot to the Telegram chat
+    chat_id = update.effective_chat.id
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('monthly_plot.png', 'rb'))
 
 # Function to plot Yearly Blood Donation Counts by State
@@ -121,6 +122,7 @@ def plot_yearly(update: Update, context: CallbackContext):
     fig.write_image("yearly_plot.png")
 
     # Send the plot to the Telegram chat
+    chat_id = update.effective_chat.id
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('yearly_plot.png', 'rb'))
 
 # Function to plot Yearly Donations Regular for Malaysia State
@@ -190,7 +192,9 @@ def plot_yearly_donations_regular(update: Update, context: CallbackContext):
     plt.savefig(plot_filename)
 
     # Send the plot to the Telegram chat
+    chat_id = update.effective_chat.id
     context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(plot_filename, 'rb'))
+
 
 
 # Function to handle /start command
@@ -216,14 +220,14 @@ def button(update: Update, context: CallbackContext):
 
 # Function to run the script
 def run_script(update: Update, context: CallbackContext):
-    # Call your plotting functions here
     plot_monthly_cumulative(update, context)
     plot_yearly(update, context)
     plot_yearly_donations_regular(update, context)
 
+
 # Main function
 def main():
-    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)  
+    updater = Updater("API_TOKEN", use_context=True)  
     dp = updater.dispatcher
 
     # Add handlers for commands and callbacks
@@ -233,8 +237,8 @@ def main():
     # Start the bot
     updater.start_polling()
 
-    # Schedule the script to run every day at 8 am
-    schedule.every().day.at("08:00").do(run_script, update=None, context=None)
+    # Schedule the script to run every day at 8.45 am
+    schedule.every().day.at("08:45").do(run_script, context=None)
 
     # Keep the script running
     while True:
