@@ -228,7 +228,7 @@ def run_script():
     class DummyContext:
         def __init__(self):
             # Simulate the bot object
-            self.bot = telegram.Bot(token="6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM")  
+            self.bot = telegram.Bot(token="API_TOKEN")  
 
     # Instantiate dummy objects
     dummy_update = DummyUpdate()
@@ -242,7 +242,7 @@ def run_script():
 
 # Main function
 def main():
-    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)  
+    updater = Updater("API_TOKEN", use_context=True)  
     dp = updater.dispatcher
 
     # Add handlers for commands and callbacks
