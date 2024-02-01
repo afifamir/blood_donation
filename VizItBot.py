@@ -3,10 +3,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import seaborn as sns
 import matplotlib.pyplot as plt
+import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 import schedule
 import time
+
 
 # Function to plot Monthly Cumulative Blood Donation Counts by State
 def plot_monthly_cumulative(update: Update, context: CallbackContext):
@@ -64,8 +66,7 @@ def plot_monthly_cumulative(update: Update, context: CallbackContext):
     fig.write_image("monthly_plot.png")
 
     # Send the plot to the Telegram chat
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('monthly_plot.png', 'rb'))
+    context.bot.send_photo(chat_id= GROUP_CHAT_ID, photo=open('monthly_plot.png', 'rb'))
 
 # Function to plot Yearly Blood Donation Counts by State
 def plot_yearly(update: Update, context: CallbackContext):
@@ -122,8 +123,7 @@ def plot_yearly(update: Update, context: CallbackContext):
     fig.write_image("yearly_plot.png")
 
     # Send the plot to the Telegram chat
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open('yearly_plot.png', 'rb'))
+    context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=open('yearly_plot.png', 'rb'))
 
 # Function to plot Yearly Donations Regular for Malaysia State
 def plot_yearly_donations_regular(update: Update, context: CallbackContext):
@@ -188,12 +188,12 @@ def plot_yearly_donations_regular(update: Update, context: CallbackContext):
     plt.ylabel('Number of Returning Donors', fontsize=12, fontfamily='Helvetica')
 
     # Save plot to file
+
     plot_filename = "returning_donors_plot.png"
     plt.savefig(plot_filename)
 
     # Send the plot to the Telegram chat
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=update.effective_chat.id, photo=open(plot_filename, 'rb'))
+    context.bot.send_photo(chat_id=GROUP_CHAT_ID, photo=open(plot_filename, 'rb'))
 
 
 
@@ -218,16 +218,31 @@ def button(update: Update, context: CallbackContext):
     elif query.data == 'plot_yearly_donations_regular':
         plot_yearly_donations_regular(update, context)
 
+
 # Function to run the script
-def run_script(update: Update, context: CallbackContext):
-    plot_monthly_cumulative(update, context)
-    plot_yearly(update, context)
-    plot_yearly_donations_regular(update, context)
+def run_script():
+    # Create dummy update and context objects
+    class DummyUpdate:
+        effective_chat = type('EffectiveChat', (), {'id': GROUP_CHAT_ID})  
+
+    class DummyContext:
+        def __init__(self):
+            # Simulate the bot object
+            self.bot = telegram.Bot(token="6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM")  
+
+    # Instantiate dummy objects
+    dummy_update = DummyUpdate()
+    dummy_context = DummyContext()
+
+    # Call your plotting functions with the dummy objects
+    plot_monthly_cumulative(dummy_update, dummy_context)
+    plot_yearly(dummy_update, dummy_context)
+    plot_yearly_donations_regular(dummy_update, dummy_context)
 
 
 # Main function
 def main():
-    updater = Updater("API_TOKEN", use_context=True)  
+    updater = Updater("6752804307:AAHTCQ9l98R-bmgBn1JT-86GgSaBH2HAZTM", use_context=True)  
     dp = updater.dispatcher
 
     # Add handlers for commands and callbacks
@@ -237,8 +252,8 @@ def main():
     # Start the bot
     updater.start_polling()
 
-    # Schedule the script to run every day at 8.45 am
-    schedule.every().day.at("08:45").do(run_script, context=None)
+    # Schedule the script to run every day at 10.30 am
+    schedule.every().day.at("10:30").do(run_script)
 
     # Keep the script running
     while True:
